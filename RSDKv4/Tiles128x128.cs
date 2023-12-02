@@ -24,6 +24,7 @@
                     SolidTop,
                     SolidAllButTop,
                     SolidNone,
+                    SolidTopNoGrip,
                 }
 
                 /// <summary>
