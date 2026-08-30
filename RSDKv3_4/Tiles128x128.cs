@@ -160,18 +160,8 @@
 
         public void Read(Reader reader)
         {
-			chunkList = new Block[CHUNK_LIST_SIZE];
-			for (int i = 0; i < chunkList.Length; i++)
-                chunkList[i] = new Block();
-
             for (int c = 0; c < CHUNK_LIST_SIZE; c++)
-			{
-				// In some cases such as CD's various menu scenes, the 128x128Tiles.bin file only contains half the amount of chunks it should..
-				// So, instead of attempting to read further, let's just stop reading and leave the remaining chunks as blank
-				if (reader.isEof) break;
-
                 chunkList[c].Read(reader);
-			}
 
             reader.Close();
         }
