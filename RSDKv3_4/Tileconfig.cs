@@ -158,6 +158,10 @@
 
             for (int c = 0; c < TILE_LIST_SIZE; ++c)
             {
+				// In some cases, the CollisionMasks.bin might not have as many tiles as it should (though afaik unlike chunks, this never happens in the official games?-)
+				// Either way, instead of attempting to read further, let's just stop reading and leave the remaining tiles as blank
+				if (reader.isEof) break;
+
                 collisionMasks[0][c].Read(reader);
                 collisionMasks[1][c].Read(reader);
             }

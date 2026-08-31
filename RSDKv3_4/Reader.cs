@@ -25,7 +25,7 @@ namespace RSDKv3_4
 
         public bool isEof
         {
-            get { return BaseStream.Position >= BaseStream.Length; }
+            get { return BaseStream.CanSeek ? BaseStream.Position >= BaseStream.Length : false; }
         }
 
         public string ReadStringRSDK()

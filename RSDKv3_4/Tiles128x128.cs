@@ -54,44 +54,42 @@
 
                 public void Read(Reader reader)
                 {
+					// In some cases such as CD's various menu scenes, the 128x128Tiles.bin file only contains half the amount of chunks it should..
+					// Because of this, the file just isn't as large as we'd expect it to be (which is bad)
+					// Instead of checking EoF every block, we use Read here instead:
+					// - when the expected amount of bytes can't be found, the buffer is just left at zero (so we create default chunks)
                     byte[] tileBytes = new byte[3];
-
                     reader.Read(tileBytes, 0, tileBytes.Length);
 
-                    tileBytes[0] = (byte)(tileBytes[0] - (tileBytes[0] >> 6 << 6));
-                    visualPlane = (VisualPlanes)(tileBytes[0] >> 4);
+					// Tile format in bits: 00VVDDII IIIIIIII AAAABBBB
+					// - 00: Unused, always zero
+					// - VV: Visual plane
+					// - DD: Direction
+					// - II: Tile index
+					// - AA: Solidity A
+					// - BB: Solidity B
 
-                    tileBytes[0] = (byte)(tileBytes[0] - (tileBytes[0] >> 4 << 4));
-                    direction = (Directions)(tileBytes[0] >> 2);
-
-                    tileBytes[0] = (byte)(tileBytes[0] - (tileBytes[0] >> 2 << 2));
-                    tileIndex = (ushort)((tileBytes[0] << 8) + tileBytes[1]);
+                    visualPlane = (VisualPlanes)((tileBytes[0] >> 4) & 3);
+                    direction = (Directions)((tileBytes[0] >> 2) & 3);
+                    tileIndex = (ushort)(((tileBytes[0] & 3) << 8) | tileBytes[1]);
 
                     solidityA = (Solidities)(tileBytes[2] >> 4);
-                    solidityB = (Solidities)(tileBytes[2] - (tileBytes[2] >> 4 << 4));
+                    solidityB = (Solidities)(tileBytes[2] & 0x0F);
                 }
 
                 public void Write(Writer writer)
                 {
-                    int[] tileBytes = new int[3];
+                    byte[] tileBytes = new byte[3];
 
-                    tileBytes[0] = 0;
+					// See Read() for format details, we just stuff all the properties back into their bytes now
 
-                    tileBytes[0] |= (byte)(tileIndex >> 8); //Put the first bit onto buffer[0]
-                    tileBytes[0] = (byte)(tileBytes[0] + (tileBytes[0] >> 2 << 2));
-                    tileBytes[0] |= (((int)direction) << 2); //Put the Flip of the tile two bits in
-                    tileBytes[0] = (byte)(tileBytes[0] + (tileBytes[0] >> 4 << 4));
-                    tileBytes[0] |= ((int)visualPlane) << 4; //Put the Layer of the tile four bits in
-                    tileBytes[0] = (byte)(tileBytes[0] + (tileBytes[0] >> 6 << 6));
+                    tileBytes[0] = (byte)(((int)visualPlane << 4) | ((int)direction << 2) | (tileIndex >> 8));
+                    tileBytes[1] = (byte)(tileIndex & 0xFF);
+                    tileBytes[2] = (byte)((int)solidityA << 4 | (int)solidityB);
 
-                    tileBytes[1] = (byte)(tileIndex & 0xFF); //Put the rest of the Tile16x16 Value into this buffer
-
-                    tileBytes[2] = (byte)solidityB; //Colision Flag 1 is all bytes before bit 5
-                    tileBytes[2] = tileBytes[2] | (int)solidityA << 4; //Colision Flag 0 is all bytes after bit 4
-
-                    writer.Write((byte)tileBytes[0]);
-                    writer.Write((byte)tileBytes[1]);
-                    writer.Write((byte)tileBytes[2]);
+                    writer.Write(tileBytes[0]);
+                    writer.Write(tileBytes[1]);
+                    writer.Write(tileBytes[2]);
                 }
             }
 
